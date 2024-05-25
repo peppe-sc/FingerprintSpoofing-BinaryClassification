@@ -112,39 +112,126 @@ def main():
     print(">>> END: Lab 5 with all the feature\n")
 
     print(">>> START: Lab 5 with only the first 4 features\n")
-    lab5(data[0:4,:],labels)
+    lab5(data[0:4,:],labels, mode="first_4")
     print(">>> END: Lab 5 with only the first 4 features\n")
 
     print(">>> START: Lab 5 with only the first 2 features\n")
-    lab5(data[0:2,:],labels)
+    lab5(data[0:2,:],labels, mode="first_2")
     print(">>> END: Lab 5 with only the first 2 features\n")
 
     print(">>> START: Lab 5 with only the features 3-4\n")
-    lab5(data[2:4,:],labels)
+    lab5(data[2:4,:],labels, mode="last_2")
     print(">>> END: Lab 5 with only features 3-4\n")
     
     print(">>> START: Lab 5 with PCA\n")
-    lab5(apply_pca(data,m = 4), labels)
+    lab5(apply_pca(data,m = 4), labels, mode="pca")
     print(">>> END: Lab 5 with PCA\n")
 
+    print(">>> START: Lab 7\n")
+    lab7(data, labels)
+    print(">>> END: Lab 7\n")
+
+def lab7(data,labels):
+    (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
+    llr = np.load("./backups/LLR_MVG.npy")
+
+    from confusion_matrix import (compute_optimal_Bayes_binary_llr, 
+                                compute_confusion_matrix,
+                                compute_empirical_Bayes_risk_binary,
+                                compute_empirical_Bayes_risk,
+                                compute_minDCF_binary_slow,
+                                compute_minDCF_binary_fast,
+                                compute_Pfn_Pfp_allThresholds_fast)
+
+    for prior, Cfn, Cfp in [(0.5, 1.0, 1.0), (0.9, 1.0, 1.0), (0.1, 1.0, 1.0), (0.5, 1.0, 9.0), (0.5, 9.0, 1.0)]:
+        print()
+        print('Prior', prior, '- Cfn', Cfn, '- Cfp', Cfp)
+        
+        predictions = compute_optimal_Bayes_binary_llr(llr, prior, Cfn, Cfp)
+
+        print(compute_confusion_matrix(predictions, LVAL))
+    
+        print('DCF (non-normalized): %.3f' % (compute_empirical_Bayes_risk_binary(
+            predictions, LVAL, prior, Cfn, Cfp, normalize=False)))
+        print('DCF (non-normalized, multiclass code): %.3f' % (compute_empirical_Bayes_risk(
+            predictions,
+            LVAL,
+            np.array([1-prior, prior]), # Class 1 is the second element for multiclass
+            np.array([[0, Cfn], [Cfp, 0]]),
+            normalize=False)))
+        print('DCF (normalized): %.3f' % (compute_empirical_Bayes_risk_binary(
+            predictions, LVAL, prior, Cfn, Cfp)))
+        print('DCF (normalized, multiclass code): %.3f' % (compute_empirical_Bayes_risk(
+            predictions,
+            LVAL,
+            np.array([1-prior, prior]), # Class 1 is the second element for multiclass
+            np.array([[0, Cfn], [Cfp, 0]]))))
+        
+        minDCF, minDCFThreshold = compute_minDCF_binary_fast(llr, LVAL, prior, Cfn, Cfp, returnThreshold=True)
+        print('MinDCF (normalized, fast): %.3f (@ th = %e)' % (minDCF, minDCFThreshold))
+
+    # ROC plot - uncomment the commented lines to see the plot
+    Pfn, Pfp, _ = compute_Pfn_Pfp_allThresholds_fast(llr, labels)
+    plt.figure(0)
+    plt.plot(Pfp, 1-Pfn)
+    plt.show()
+
+    # Bayes error plot
+    effPriorLogOdds = np.linspace(-3, 3, 21)
+    effPriors = 1.0 / (1.0 + np.exp(-effPriorLogOdds))
+    actDCF = []
+    minDCF = []
+    for effPrior in effPriors:
+        # Alternatively, we can compute actDCF directly from compute_empirical_Bayes_risk_binary_llr_optimal_decisions(commedia_llr_binary, commedia_labels_binary, effPrior, 1.0, 1.0)
+        predictions = compute_optimal_Bayes_binary_llr(llr, effPrior, 1.0, 1.0)
+        actDCF.append(compute_empirical_Bayes_risk_binary(predictions, LVAL, effPrior, 1.0, 1.0))
+        minDCF.append(compute_minDCF_binary_fast(llr, LVAL, effPrior, 1.0, 1.0))
+    plt.figure(1)
+    plt.plot(effPriorLogOdds, actDCF, label='actDCF eps 0.001', color='r')
+    plt.plot(effPriorLogOdds, minDCF, label='DCF eps 0.001', color='b')
+    plt.ylim([0, 1.1])
+    plt.show()
+            
+#    commedia_llr_binary = np.load('../Data/commedia_llr_infpar_eps1.npy')
+#    commedia_labels_binary = np.load('../Data/commedia_labels_infpar_eps1.npy')
+#
+#    actDCF = []
+#    minDCF = []
+#    for effPrior in effPriors:
+#        # Alternatively, we can compute actDCF directly from compute_empirical_Bayes_risk_binary_llr_optimal_decisions(commedia_llr_binary, commedia_labels_binary, effPrior, 1.0, 1.0)
+#        commedia_predictions_binary = compute_optimal_Bayes_binary_llr(commedia_llr_binary, effPrior, 1.0, 1.0)
+#        actDCF.append(compute_empirical_Bayes_risk_binary(commedia_predictions_binary, commedia_labels_binary, effPrior, 1.0, 1.0))
+#        minDCF.append(compute_minDCF_binary_fast(commedia_llr_binary, commedia_labels_binary, effPrior, 1.0, 1.0))
+#
+#    matplotlib.pyplot.plot(effPriorLogOdds, actDCF, label='actDCF eps 1.0', color='y')
+#    matplotlib.pyplot.plot(effPriorLogOdds, minDCF, label='DCF eps 1.0', color='c')
+#    matplotlib.pyplot.ylim([0, 1.1])
+#
+#    matplotlib.pyplot.legend()
+#    matplotlib.pyplot.show()
+#
+#
+    
 
 
-
-def lab5(data, labels):
+def lab5(data, labels, mode = "default"):
 
     (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
 
     hParams_MVG = Gau_MVG_ML_estimates(DTR, LTR)
 
     for lab in [0,1]:
-        print('MVG - Class', lab)
-        print(hParams_MVG[lab][0])
-        print(hParams_MVG[lab][1])
+        #print('MVG - Class', lab)
+        #print(hParams_MVG[lab][0])
+        #print(hParams_MVG[lab][1])
         print()
 
 
 
     LLR = logpdf_GAU_ND(DVAL, hParams_MVG[1][0], hParams_MVG[1][1]) - logpdf_GAU_ND(DVAL, hParams_MVG[0][0], hParams_MVG[0][1])
+
+    if mode == "default":
+        np.save("./backups/LLR_MVG.npy",LLR)
 
     PVAL = np.zeros(DVAL.shape[1], dtype=np.int32)
     TH = 0
@@ -157,9 +244,9 @@ def lab5(data, labels):
 
     hParams_Tied = Gau_Tied_ML_estimates(DTR, LTR)
     for lab in [0,1]:
-        print('Tied Gaussian - Class', lab)
-        print(hParams_Tied[lab][0])
-        print(hParams_Tied[lab][1])
+        #print('Tied Gaussian - Class', lab)
+        #print(hParams_Tied[lab][0])
+        #print(hParams_Tied[lab][1])
         print()
 
     LLR = logpdf_GAU_ND(DVAL, hParams_Tied[1][0], hParams_Tied[1][1]) - logpdf_GAU_ND(DVAL, hParams_Tied[0][0], hParams_Tied[0][1])
@@ -176,9 +263,9 @@ def lab5(data, labels):
 
     hParams_Naive = Gau_Naive_ML_estimates(DTR, LTR)
     for lab in [0,1]:
-        print('Naive Bayes Gaussian - Class', lab)
-        print(hParams_Naive[lab][0])
-        print(hParams_Naive[lab][1])
+        #print('Naive Bayes Gaussian - Class', lab)
+        #print(hParams_Naive[lab][0])
+        #print(hParams_Naive[lab][1])
         print()
     
     S_logLikelihood = compute_log_likelihood_Gau(DVAL, hParams_Naive)
@@ -196,10 +283,6 @@ def lab5(data, labels):
     Corr_1 = C / ( v_col(C.diagonal()**0.5) * v_row(C.diagonal()**0.5) )
     print("Correlation Matrix for class 1:\n",Corr_1)
 
-
-
-
-    
 
 
 
