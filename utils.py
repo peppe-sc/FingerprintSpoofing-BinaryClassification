@@ -41,7 +41,7 @@ def parse_file(f):
     dataset = dataset.T
 
     # The labels are in the last row
-    labels = dataset[-1]
+    labels = dataset[-1].astype(np.int32)
     data = dataset[0:6]
 
     return data,labels

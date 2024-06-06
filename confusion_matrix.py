@@ -116,3 +116,12 @@ def compute_Pfn_Pfp_allThresholds_fast(llr, classLabels):
             thresholdsOut.append(llrSorted[idx])
             
     return numpy.array(PfnOut), numpy.array(PfpOut), numpy.array(thresholdsOut) # we return also the corresponding thresholds
+
+
+# Compute empirical Bayes (DCF or actDCF) risk from llr with optimal Bayes decisions
+def compute_empirical_Bayes_risk_binary_llr_optimal_decisions(llr, classLabels, prior, Cfn, Cfp, normalize=True):
+    predictedLabels = compute_optimal_Bayes_binary_llr(llr, prior, Cfn, Cfp)
+    return compute_empirical_Bayes_risk_binary(predictedLabels, classLabels, prior, Cfn, Cfp, normalize=normalize)
+
+
+compute_actDCF_binary_fast = compute_empirical_Bayes_risk_binary_llr_optimal_decisions # To have a function with a similar name to the minDCF one

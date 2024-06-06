@@ -15,7 +15,7 @@ def apply_pca(data, val = None,m = None):
     else:
         P = eigenvectors[:,::-1][:,0:m]
     
-    if val == None:
+    if val is None:
         return P.T @ data
     
     # Apply pca to both train and val data

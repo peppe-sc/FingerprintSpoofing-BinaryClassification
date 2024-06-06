@@ -11,6 +11,9 @@ GENUINE = 1
 FAKE = 0
 
 
+
+
+
 def show_hists(genuine,fake):
     # For each feature
     for feature in range(6):
@@ -105,47 +108,242 @@ def main():
 
     # Labs until lab4
     #until_lab4(data,labels)
+ #   print()
+ #   # Lab5
+ #   print(">>> START: Lab 5 with all the feature\n")
+ #   lab5(data,labels)
+ #   print(">>> END: Lab 5 with all the feature\n")
+#
+ #   print(">>> START: Lab 5 with only the first 4 features\n")
+ #   lab5(data[0:4,:],labels, mode="first_4")
+ #   print(">>> END: Lab 5 with only the first 4 features\n")
+#
+ #   print(">>> START: Lab 5 with only the first 2 features\n")
+ #   lab5(data[0:2,:],labels, mode="first_2")
+ #   print(">>> END: Lab 5 with only the first 2 features\n")
+#
+ #   print(">>> START: Lab 5 with only the features 3-4\n")
+ #   lab5(data[2:4,:],labels, mode="last_2")
+ #   print(">>> END: Lab 5 with only features 3-4\n")
+ #   
+ #   for m in range(1,6):
+ #       print(">>> START: Lab 5 with PCA m = "+ str(m) +"\n")
+ #       lab5(data, labels, mode="pca_m"+str(m), m = m)
+ #       print(">>> END: Lab 5 with PCA m = " + str(m) + "\n")
+#
+ #   prior_cost_list = [(0.5, 1.0, 1.0), (0.9, 1.0, 1.0), (0.1, 1.0, 1.0), (0.5, 1.0, 9.0), (0.5, 9.0, 1.0)]
+#
+ #   for prior, Cfn, Cfp in prior_cost_list:
+ #       effective_prior = (prior*Cfn)/(prior*Cfn + (1-prior)*Cfp)
+ #       print(f'Effective prior for configuration {prior} {Cfn} {Cfp} = ', effective_prior)
+#
+ #   # Lab7
+#
+ #   best_m_MVG = 0
+ #   best_DCF_MVG = 99999999999999.0
+#
+ #   
+ #   best_m_Tied = 0
+ #   best_DCF_Tied = 99999999999999.0
+#
+ #   
+ #   best_m_Naive = 0
+ #   best_DCF_Naive = 99999999999999.0
+ #   
+#
+ #   print(">>> START: Lab 7 MVG\n")
+ #   lab7(data, labels)
+ #   print(">>> END: Lab 7 MVG\n")
+ #   
+ #   print(">>> START: Lab 7 Tied\n")
+ #   lab7(data, labels, model="Tied")
+ #   print(">>> END: Lab 7 Tied\n")
+#
+ #   print(">>> START: Lab 7 Naive\n")
+ #   lab7(data, labels, model="Naive")
+ #   print(">>> END: Lab 7 Naive\n")
+#
+ #   for m in range(1,6):
+#
+ #       print(">>> START: Lab 7 PCA MVG\n", "m = ", m)
+#
+ #       dcf,actDCF = lab7(data, labels, mode="pca_m"+str(m),m=m)
+#
+ #       if(dcf < best_DCF_MVG):
+ #           best_m_MVG = m
+ #           best_DCF_MVG = dcf
+ #           best_act_MVG = actDCF
+#
+ #       print(">>> END: Lab 7 PCA MVG\n")
+#
+ #       print(">>> START: Lab 7 PCA Tied\n" "m = ", m)
+ #       dcf,actDCF = lab7(data, labels, model="Tied", mode="pca_m"+str(m), m=m)
+ #       if(dcf < best_DCF_Tied):
+ #           best_m_Tied = m
+ #           best_DCF_Tied = dcf
+ #           best_act_Tied = actDCF
+ #       print(">>> END: Lab 7 PCA Tied\n")
+#
+ #       print(">>> START: Lab 7 PCA Naive\n" "m = ", m)
+ #       dcf,actDCF = lab7(data, labels, model="Naive", mode="pca_m"+str(m), m=m)
+ #       if(dcf < best_DCF_Naive):
+ #           best_m_Naive = m
+ #           best_DCF_Naive = dcf
+ #           best_act_Naive = actDCF
+ #       print(">>> END: Lab 7 PCA Naive\n")
+#
+ #       #print("The best model for prior 0.1 with PCA m = ", best_m, ", model = ", best_model, "minDCF = ", best_DCF)
+#
+ #   print(f'MVG with PCA, best m = {best_m_MVG}, DCF = {best_DCF_MVG}, Calibration error: {100.0*(best_act_MVG-best_DCF_MVG)/best_DCF_MVG}')
+ #   print(f'Tied with PCA, best m = {best_m_Tied}, DCF = {best_DCF_Tied}, Calibration error: {100.0*(best_act_Tied-best_DCF_Tied)/best_DCF_Tied}')
+ #   print(f'Naive with PCA, best m = {best_m_Naive}, DCF = {best_DCF_Naive}, Calibration error: {100.0*(best_act_Naive-best_DCF_Naive)/best_DCF_Naive}')
 
-    # Lab5
-    print(">>> START: Lab 5 with all the feature\n")
-    lab5(data,labels)
-    print(">>> END: Lab 5 with all the feature\n")
 
-    print(">>> START: Lab 5 with only the first 4 features\n")
-    lab5(data[0:4,:],labels, mode="first_4")
-    print(">>> END: Lab 5 with only the first 4 features\n")
+    (DTR, LTR), (DVAL, LVAL) = split_db_2to1(data, labels)
 
-    print(">>> START: Lab 5 with only the first 2 features\n")
-    lab5(data[0:2,:],labels, mode="first_2")
-    print(">>> END: Lab 5 with only the first 2 features\n")
+    print(">>> START: Lab 8 \n")
+    lab8(DTR,LTR,DVAL,LVAL)
+    print(">>> END: Lab 8 \n")
 
-    print(">>> START: Lab 5 with only the features 3-4\n")
-    lab5(data[2:4,:],labels, mode="last_2")
-    print(">>> END: Lab 5 with only features 3-4\n")
+    print(">>> START: Lab 8 only few samples\n")
+    lab8(DTR[:,::50],LTR[::50],DVAL,LVAL, mode='few_samples')
+    print(">>> END: Lab 8 only few samples\n")
+
+
+from confusion_matrix import compute_actDCF_binary_fast
+from logreg import trainLogRegBinary, trainWeightedLogRegBinary, trainLogRegQuadratic, quadratic_features
+
+def lab8(DTR,LTR,DVAL,LVAL, mode = 'default'):
     
-    print(">>> START: Lab 5 with PCA\n")
-    lab5(apply_pca(data,m = 4), labels, mode="pca")
-    print(">>> END: Lab 5 with PCA\n")
+    minDCF_values = []
+    actDCF_values = []
 
-    print(">>> START: Lab 7\n")
-    lab7(data, labels)
-    print(">>> END: Lab 7\n")
+    minDCF_values_w = []
+    actDCF_values_w = []
 
-def lab7(data,labels):
-    (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
-    llr = np.load("./backups/LLR_MVG.npy")
+    minDCF_values_q = []
+    actDCF_values_q = []
 
-    from confusion_matrix import (compute_optimal_Bayes_binary_llr, 
+
+    for lam in np.logspace(-4, 2, 13):
+
+        # Linear
+        print()
+        w, b = trainLogRegBinary(DTR, LTR, lam) # Train model
+        sVal = np.dot(w.T, DVAL) + b # Compute validation scores
+        PVAL = (sVal > 0) * 1 # Predict validation labels - sVal > 0 returns a boolean array, multiplying by 1 (integer) we get an integer array with 0's and 1's corresponding to the original True and False values
+        err = (PVAL != LVAL).sum() / float(LVAL.size)
+        print ('Error rate: %.1f' % (err*100))
+        # Compute empirical prior
+        pEmp = (LTR == 1).sum() / LTR.size
+        # Compute LLR-like scores
+        sValLLR = sVal - np.log(pEmp / (1-pEmp))
+        # Compute optimal decisions for the prior 0.1
+
+        minDCF = compute_minDCF_binary_fast(sValLLR, LVAL, 0.1, 1.0, 1.0)
+        actDCF = compute_actDCF_binary_fast(sValLLR, LVAL, 0.1, 1.0, 1.0)
+
+        minDCF_values.append(minDCF)
+        actDCF_values.append(actDCF)
+
+        print ('minDCF - pT = 0.5: %.4f' % minDCF)
+        print ('actDCF - pT = 0.5: %.4f' % actDCF)
+
+
+        # Weighted
+        pT = 0.1
+        w, b = trainWeightedLogRegBinary(DTR, LTR, lam, pT = pT) # Train model to print the loss
+        sVal = np.dot(w.T, DVAL) + b
+        sValLLR = sVal - np.log(pT / (1-pT))
+
+        minDCF_w = compute_minDCF_binary_fast(sValLLR, LVAL, pT, 1.0, 1.0)
+        actDCF_w = compute_actDCF_binary_fast(sValLLR, LVAL, pT, 1.0, 1.0)
+
+        minDCF_values_w.append(minDCF_w)
+        actDCF_values_w.append(actDCF_w)
+
+        print ('minDCF - pT = 0.8: %.4f' % minDCF_w)
+        print ('actDCF - pT = 0.8: %.4f' % actDCF_w)
+        
+        # Quadratic
+        if mode != 'few_samples':
+            print ()
+            w, b = trainLogRegQuadratic(DTR, LTR, lam) # Train model
+            DVAL_quad = quadratic_features(DVAL)
+            print("Quadratic shape val: ",DVAL_quad.shape)
+            sVal = np.dot(w.T, DVAL_quad) + b # Compute validation scores
+            PVAL = (sVal > 0) * 1 # Predict validation labels - sVal > 0 returns a boolean array, multiplying by 1 (integer) we get an integer array with 0's and 1's corresponding to the original True and False values
+            err = (PVAL != LVAL).sum() / float(LVAL.size)
+            print ('Error rate: %.1f' % (err*100))
+            # Compute empirical prior
+            pEmp = (LTR == 1).sum() / LTR.size
+            # Compute LLR-like scores
+            sValLLR = sVal - np.log(pEmp / (1-pEmp))
+            # Compute optimal decisions for the prior 0.1
+
+            minDCF_q = compute_minDCF_binary_fast(sValLLR, LVAL, 0.1, 1.0, 1.0)
+            actDCF_q = compute_actDCF_binary_fast(sValLLR, LVAL, 0.1, 1.0, 1.0)
+
+            minDCF_values_q.append(minDCF_q)
+            actDCF_values_q.append(actDCF_q)
+
+            print ('minDCF - pT = 0.5: %.4f' % minDCF_q)
+            print ('actDCF - pT = 0.5: %.4f' % actDCF_q)
+            print()
+
+    plt.figure()
+    plt.plot(np.logspace(-4, 2, 13),actDCF_values, label = 'actDCF')
+    plt.plot(np.logspace(-4, 2, 13),minDCF_values, label = 'minDCF')
+    plt.legend()
+    plt.title('minDCF and actDCF in function of lambda')
+    plt.xscale('log',base = 10)
+    plt.savefig(f'LogReg/DCFplot_{mode}.png')
+
+    plt.figure()
+    plt.plot(np.logspace(-4, 2, 13),actDCF_values_w, label = 'actDCF')
+    plt.plot(np.logspace(-4, 2, 13),minDCF_values_w, label = 'minDCF')
+    plt.legend()
+    plt.title('minDCF and actDCF in function of lambda')
+    plt.xscale('log',base = 10)
+    plt.savefig(f'LogReg/DCFplot_Weighted_{mode}.png')
+
+    if mode != 'few_samples':
+        plt.figure()
+        plt.plot(np.logspace(-4, 2, 13),actDCF_values_q, label = 'actDCF')
+        plt.plot(np.logspace(-4, 2, 13),minDCF_values_q, label = 'minDCF')
+        plt.legend()
+        plt.title('minDCF and actDCF in function of lambda')
+        plt.xscale('log',base = 10)
+        plt.savefig(f'LogReg/DCFplot_Quadratic_{mode}.png')
+    
+
+
+from confusion_matrix import (compute_optimal_Bayes_binary_llr, 
                                 compute_confusion_matrix,
                                 compute_empirical_Bayes_risk_binary,
-                                compute_empirical_Bayes_risk,
-                                compute_minDCF_binary_slow,
                                 compute_minDCF_binary_fast,
                                 compute_Pfn_Pfp_allThresholds_fast)
 
-    for prior, Cfn, Cfp in [(0.5, 1.0, 1.0), (0.9, 1.0, 1.0), (0.1, 1.0, 1.0), (0.5, 1.0, 9.0), (0.5, 9.0, 1.0)]:
+def lab7(data,labels,model = "MVG", mode = "default", m = 0):
+    (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
+    llr = np.load("./backups/LLR_"+model+"_"+mode+".npy")
+
+    return_value = 0.0
+
+    if "pca" in mode:
+        DTR,DVAL = apply_pca(DTR,DVAL,m=m)
+
+    
+
+    prior_cost_list = []
+
+    
+    prior_cost_list = [(0.5, 1.0, 1.0), (0.9, 1.0, 1.0), (0.1, 1.0, 1.0)]
+
+    for prior, Cfn, Cfp in prior_cost_list:
         print()
-        print('Prior', prior, '- Cfn', Cfn, '- Cfp', Cfp)
+        effective_prior = (prior*Cfn)/(prior*Cfn + (1-prior)*Cfp)
+        print('Prior', prior, '- Cfn', Cfn, '- Cfp', Cfp, '- Effective Prior ',effective_prior)
         
         predictions = compute_optimal_Bayes_binary_llr(llr, prior, Cfn, Cfp)
 
@@ -153,32 +351,24 @@ def lab7(data,labels):
     
         print('DCF (non-normalized): %.3f' % (compute_empirical_Bayes_risk_binary(
             predictions, LVAL, prior, Cfn, Cfp, normalize=False)))
-        print('DCF (non-normalized, multiclass code): %.3f' % (compute_empirical_Bayes_risk(
-            predictions,
-            LVAL,
-            np.array([1-prior, prior]), # Class 1 is the second element for multiclass
-            np.array([[0, Cfn], [Cfp, 0]]),
-            normalize=False)))
-        print('DCF (normalized): %.3f' % (compute_empirical_Bayes_risk_binary(
-            predictions, LVAL, prior, Cfn, Cfp)))
-        print('DCF (normalized, multiclass code): %.3f' % (compute_empirical_Bayes_risk(
-            predictions,
-            LVAL,
-            np.array([1-prior, prior]), # Class 1 is the second element for multiclass
-            np.array([[0, Cfn], [Cfp, 0]]))))
+        DCF = compute_empirical_Bayes_risk_binary(predictions, LVAL, prior, Cfn, Cfp)
+        print('DCF (normalized): %.3f' % (DCF))
         
         minDCF, minDCFThreshold = compute_minDCF_binary_fast(llr, LVAL, prior, Cfn, Cfp, returnThreshold=True)
         print('MinDCF (normalized, fast): %.3f (@ th = %e)' % (minDCF, minDCFThreshold))
+        return_value = (minDCF,DCF)
 
     # ROC plot - uncomment the commented lines to see the plot
     Pfn, Pfp, _ = compute_Pfn_Pfp_allThresholds_fast(llr, labels)
     plt.figure(0)
     plt.plot(Pfp, 1-Pfn)
-    plt.show()
+    #plt.show()
 
     # Bayes error plot
-    effPriorLogOdds = np.linspace(-3, 3, 21)
+    effPriorLogOdds = np.linspace(-4, 4, 21)
     effPriors = 1.0 / (1.0 + np.exp(-effPriorLogOdds))
+
+
     actDCF = []
     minDCF = []
     for effPrior in effPriors:
@@ -186,37 +376,31 @@ def lab7(data,labels):
         predictions = compute_optimal_Bayes_binary_llr(llr, effPrior, 1.0, 1.0)
         actDCF.append(compute_empirical_Bayes_risk_binary(predictions, LVAL, effPrior, 1.0, 1.0))
         minDCF.append(compute_minDCF_binary_fast(llr, LVAL, effPrior, 1.0, 1.0))
-    plt.figure(1)
-    plt.plot(effPriorLogOdds, actDCF, label='actDCF eps 0.001', color='r')
-    plt.plot(effPriorLogOdds, minDCF, label='DCF eps 0.001', color='b')
+    plt.figure()
+    plt.plot(effPriorLogOdds, actDCF, label='actDCF', color='r')
+    plt.plot(effPriorLogOdds, minDCF, label='minDCF', color='b')
     plt.ylim([0, 1.1])
-    plt.show()
+    plt.legend()
+
+    title = f'Model = {model}'
+
+    if m != 0:
+        title += f' PCA m: {m}'
+
+    plt.title(title)
+    plt.savefig("DCF/DCF_" + model + "_" + mode + ".png")
+    #plt.show()
+
+    return return_value
             
-#    commedia_llr_binary = np.load('../Data/commedia_llr_infpar_eps1.npy')
-#    commedia_labels_binary = np.load('../Data/commedia_labels_infpar_eps1.npy')
-#
-#    actDCF = []
-#    minDCF = []
-#    for effPrior in effPriors:
-#        # Alternatively, we can compute actDCF directly from compute_empirical_Bayes_risk_binary_llr_optimal_decisions(commedia_llr_binary, commedia_labels_binary, effPrior, 1.0, 1.0)
-#        commedia_predictions_binary = compute_optimal_Bayes_binary_llr(commedia_llr_binary, effPrior, 1.0, 1.0)
-#        actDCF.append(compute_empirical_Bayes_risk_binary(commedia_predictions_binary, commedia_labels_binary, effPrior, 1.0, 1.0))
-#        minDCF.append(compute_minDCF_binary_fast(commedia_llr_binary, commedia_labels_binary, effPrior, 1.0, 1.0))
-#
-#    matplotlib.pyplot.plot(effPriorLogOdds, actDCF, label='actDCF eps 1.0', color='y')
-#    matplotlib.pyplot.plot(effPriorLogOdds, minDCF, label='DCF eps 1.0', color='c')
-#    matplotlib.pyplot.ylim([0, 1.1])
-#
-#    matplotlib.pyplot.legend()
-#    matplotlib.pyplot.show()
-#
-#
-    
 
-
-def lab5(data, labels, mode = "default"):
+def lab5(data, labels, mode = "default", m = 0):
 
     (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
+
+    if "pca" in mode:
+        
+        DTR,DVAL = apply_pca(DTR,DVAL,m=m)
 
     hParams_MVG = Gau_MVG_ML_estimates(DTR, LTR)
 
@@ -230,8 +414,8 @@ def lab5(data, labels, mode = "default"):
 
     LLR = logpdf_GAU_ND(DVAL, hParams_MVG[1][0], hParams_MVG[1][1]) - logpdf_GAU_ND(DVAL, hParams_MVG[0][0], hParams_MVG[0][1])
 
-    if mode == "default":
-        np.save("./backups/LLR_MVG.npy",LLR)
+    
+    np.save("./backups/LLR_MVG_"+mode+".npy",LLR)
 
     PVAL = np.zeros(DVAL.shape[1], dtype=np.int32)
     TH = 0
@@ -251,6 +435,8 @@ def lab5(data, labels, mode = "default"):
 
     LLR = logpdf_GAU_ND(DVAL, hParams_Tied[1][0], hParams_Tied[1][1]) - logpdf_GAU_ND(DVAL, hParams_Tied[0][0], hParams_Tied[0][1])
 
+    np.save("./backups/LLR_Tied_"+mode+".npy",LLR)
+
     PVAL = np.zeros(DVAL.shape[1], dtype=np.int32)
     TH = 0
     PVAL[LLR >= TH] = 1
@@ -268,6 +454,10 @@ def lab5(data, labels, mode = "default"):
         #print(hParams_Naive[lab][1])
         print()
     
+    LLR = logpdf_GAU_ND(DVAL, hParams_Naive[1][0], hParams_Naive[1][1]) - logpdf_GAU_ND(DVAL, hParams_Naive[0][0], hParams_Naive[0][1])
+
+    np.save("./backups/LLR_Naive_"+mode+".npy",LLR)
+
     S_logLikelihood = compute_log_likelihood_Gau(DVAL, hParams_Naive)
     S_logPost = compute_logPosterior(S_logLikelihood, np.ones(2)/2.)
     PVAL = S_logPost.argmax(0)
@@ -282,9 +472,6 @@ def lab5(data, labels, mode = "default"):
     C = hParams_MVG[1][1]
     Corr_1 = C / ( v_col(C.diagonal()**0.5) * v_row(C.diagonal()**0.5) )
     print("Correlation Matrix for class 1:\n",Corr_1)
-
-
-
 
 
 def until_lab4(data,labels):
@@ -316,11 +503,11 @@ def until_lab4(data,labels):
 
     print("Variance for fake: \n",var_fake,"\nStandard deviation for fake: \n",std_fake)
 
-    #show_hists(genuine,fake)
+    show_hists(genuine,fake)
     
     #show_scatter(genuine,fake)
 
-    #show_hists(genuine_centered,fake_centered)
+    show_hists(genuine_centered,fake_centered)
 
     #show_scatter(genuine_centered,fake_centered)
 
@@ -344,7 +531,7 @@ def until_lab4(data,labels):
     y = np.dot(P.T,data)
 
     # Plot the histograms
-    #show_hists_v2(y, labels,"./PCA/Hists")
+    show_hists_v2(y, labels,"./PCA/Hists")
     
     # Compute the within class covariance matrix 
     Sw = compute_SW(genuine,genuine_centered,fake,fake_centered,data)

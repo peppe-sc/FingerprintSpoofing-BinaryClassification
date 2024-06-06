@@ -30,9 +30,7 @@ def compute_log_likelihood_Gau(D, hParams):
     return S
 
 def compute_logPosterior(S_logLikelihood, v_prior):
-    print("Lilelihood:\n",S_logLikelihood)
     SJoint = S_logLikelihood + v_col(np.log(v_prior))
-    print("Sjoint: \n",SJoint[1])
     SMarginal = v_row(scipy.special.logsumexp(SJoint, axis=0))
     SPost = SJoint - SMarginal
     return SPost
