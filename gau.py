@@ -1,13 +1,15 @@
 import numpy as np
 from utils import v_col, v_row
 import scipy
+import numpy
 
 def loglikelihood(XND,m_ML,C_ML):
     return logpdf_GAU_ND(XND,m_ML,C_ML).sum()
 
 def logpdf_GAU_ND(x, mu, sigma):
-    
-    return -(x.shape[0]/2)*np.log(2*np.pi)-(1/2)*(np.linalg.slogdet(sigma)[1])-(1/2)*((np.dot((x-mu).T, np.linalg.inv(sigma))).T*(x-mu)).sum(axis=0)
+    P = numpy.linalg.inv(sigma)
+    return -0.5*x.shape[0]*numpy.log(numpy.pi*2) - 0.5*numpy.linalg.slogdet(sigma)[1] - 0.5 * ((x-mu) * (P @ (x-mu))).sum(0)
+    #return -(x.shape[0]/2)*np.log(2*np.pi)-(1/2)*(np.linalg.slogdet(sigma)[1])-(1/2)*((np.dot((x-mu).T, np.linalg.inv(sigma))).T*(x-mu)).sum(axis=0)
 
 def compute_mu_C(D):
     mu = v_col(D.mean(1))
@@ -58,3 +60,6 @@ def Gau_Tied_ML_estimates(D, L):
     for lab in labelSet:
         hParams[lab] = (hMeans[lab], CGlobal)
     return hParams
+
+def compute_ll(X, mu, C):
+    return logpdf_GAU_ND(X, mu, C).sum()

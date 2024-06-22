@@ -20,3 +20,18 @@ def apply_pca(data, val = None,m = None):
     
     # Apply pca to both train and val data
     return P.T @ data, P.T @ val
+
+def compute_mu_C(D):
+    mu = v_col(D.mean(1))
+    C = ((D-mu) @ (D-mu).T) / float(D.shape[1])
+    return mu, C
+
+def compute_pca(D, m):
+
+    mu, C = compute_mu_C(D)
+    U, s, Vh = np.linalg.svd(C)
+    P = U[:, 0:m]
+    return P
+
+def apply_pca_sol(P, D):
+    return P.T @ D

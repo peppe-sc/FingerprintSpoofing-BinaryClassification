@@ -1,5 +1,6 @@
 import numpy as np
 from utils import *
+import scipy
 
 GENUINE = 1
 FAKE = 0
@@ -57,6 +58,39 @@ def evaluate(data,labels,threshold):
     for e in errors:
         if not e:
             errors_count += 1
-
+    print(f'Errors: {errors_count}\tTotal: {data.shape[1]}')
     # Return the accuracy
     return 100.0*(errors.shape[0]-errors_count)/float(errors.shape[0])
+
+def compute_Sb_Sw(D, L):
+    Sb = 0
+    Sw = 0
+    muGlobal = v_col(D.mean(1))
+    for i in np.unique(L):
+        DCls = D[:, L == i]
+        mu = v_col(DCls.mean(1))
+        Sb += (mu - muGlobal) @ (mu - muGlobal).T * DCls.shape[1]
+        Sw += (DCls - mu) @ (DCls - mu).T
+    return Sb / D.shape[1], Sw / D.shape[1]
+
+def compute_lda_geig(D, L, m):
+    
+    Sb, Sw = compute_Sb_Sw(D, L)
+    s, U = scipy.linalg.eigh(Sb, Sw)
+    return U[:, ::-1][:, 0:m]
+
+def compute_lda_JointDiag(D, L, m):
+
+    Sb, Sw = compute_Sb_Sw(D, L)
+
+    U, s, _ = np.linalg.svd(Sw)
+    P = np.dot(U * v_row(1.0/(s**0.5)), U.T)
+
+    Sb2 = np.dot(P, np.dot(Sb, P.T))
+    U2, s2, _ = np.linalg.svd(Sb2)
+
+    P2 = U2[:, 0:m]
+    return np.dot(P2.T, P).T
+
+def apply_lda(U, D):
+    return U.T @ D

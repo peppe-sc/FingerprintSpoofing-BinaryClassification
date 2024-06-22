@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-from pca import apply_pca
-from lda import compute_lda_matrix,compute_SB,compute_SW,evaluate
+from pca import apply_pca, compute_pca, apply_pca_sol
+from lda import compute_lda_matrix,compute_SB,compute_SW,evaluate, compute_lda_JointDiag, apply_lda
 from gau import loglikelihood,logpdf_GAU_ND,compute_mu_C,Gau_MVG_ML_estimates, compute_log_likelihood_Gau, compute_logPosterior
 
 GENUINE = 1
@@ -107,7 +107,7 @@ def main():
     data,labels = parse_file(f)
 
     # Labs until lab4
-    #until_lab4(data,labels)
+ #   until_lab4(data,labels)
  #   print()
  #   # Lab5
  #   print(">>> START: Lab 5 with all the feature\n")
@@ -201,14 +201,151 @@ def main():
 
     (DTR, LTR), (DVAL, LVAL) = split_db_2to1(data, labels)
 
-    print(">>> START: Lab 8 \n")
-    lab8(DTR,LTR,DVAL,LVAL)
-    print(">>> END: Lab 8 \n")
+#    print(">>> START: Lab 8 \n")
+#    lab8(DTR,LTR,DVAL,LVAL)
+#    print(">>> END: Lab 8 \n")
+#
+#    print(">>> START: Lab 8 only few samples\n")
+#    lab8(DTR[:,::50],LTR[::50],DVAL,LVAL, mode='few_samples')
+#    print(">>> END: Lab 8 only few samples\n")
 
-    print(">>> START: Lab 8 only few samples\n")
-    lab8(DTR[:,::50],LTR[::50],DVAL,LVAL, mode='few_samples')
-    print(">>> END: Lab 8 only few samples\n")
+#    print(">>> START: Lab 9\n")
+#    lab9(DTR,LTR,DVAL,LVAL)
+#    print(">>> END: Lab 9\n")
 
+    lab10(DTR,LTR,DVAL,LVAL)
+
+    
+
+from gmm import train_GMM_LBG_EM, logpdf_GMM
+
+def lab10(DTR,LTR,DVAL,LVAL):
+    for covType in ['full', 'diagonal', 'tied']:
+        print(covType)
+        for numC in [1,2,4,8,16,32]:
+            gmm0 = train_GMM_LBG_EM(DTR[:, LTR==0], numC, covType = covType, verbose=False, psiEig = 0.01)
+            gmm1 = train_GMM_LBG_EM(DTR[:, LTR==1], numC, covType = covType, verbose=False, psiEig = 0.01)
+
+            SLLR = logpdf_GMM(DVAL, gmm1) - logpdf_GMM(DVAL, gmm0)
+            print(numC, covType)
+            #print ('minDCF - pT = 0.5: %.4f' % bayesRisk.compute_minDCF_binary_fast(SLLR, LVAL, 0.5, 1.0, 1.0))
+            #print ('actDCF - pT = 0.5: %.4f' % bayesRisk.compute_actDCF_binary_fast(SLLR, LVAL, 0.5, 1.0, 1.0))
+            print ('\tnumC = %d: %.4f / %.4f' % (numC, compute_minDCF_binary_fast(SLLR, LVAL, 0.1, 1.0, 1.0), compute_actDCF_binary_fast(SLLR, LVAL, 0.1, 1.0, 1.0)))
+            
+        print()
+
+from svm import train_dual_SVM_linear, polyKernel,rbfKernel,train_dual_SVM_kernel
+
+def lab9(DTR,LTR,DVAL,LVAL):
+
+    C_values = np.logspace(-5, 0, 11)
+    
+    minDCF_values = []
+    actDCF_values = []
+
+    K = 1.0
+
+    # Linear
+    print("\nLinear\n")
+    for C in C_values:
+        w, b = train_dual_SVM_linear(DTR, LTR, C, K)
+        SVAL = (v_row(w) @ DVAL + b).ravel()
+        PVAL = (SVAL > 0) * 1
+        err = (PVAL != LVAL).sum() / float(LVAL.size)
+        print ('Error rate: %.1f' % (err*100))
+
+        minDCF = compute_minDCF_binary_fast(SVAL, LVAL, 0.1, 1.0, 1.0)
+        actDCF = compute_actDCF_binary_fast(SVAL, LVAL, 0.1, 1.0, 1.0)
+        print ('minDCF - pT = 0.1: %.4f' % minDCF)
+        print ('actDCF - pT = 0.1: %.4f' % actDCF)
+        print ()
+
+        minDCF_values.append(minDCF)
+        actDCF_values.append(actDCF)
+
+
+    plt.figure()
+    plt.plot(C_values,minDCF_values, label = "minDCF")
+    plt.plot(C_values,actDCF_values, label = "actDCF")
+    plt.legend()
+    plt.title('minDCF and actDCF in function of C')
+    plt.xscale('log',base = 10)
+    plt.savefig("SVM/linear_svm.png")
+
+
+    # Poly
+    print("\nPoly\n")
+    minDCF_values = []
+    actDCF_values = []
+
+    poly_kernel = polyKernel(2,1)
+
+    for C in C_values:
+        fScore = train_dual_SVM_kernel(DTR, LTR, C, poly_kernel, 0.0)
+        SVAL = fScore(DVAL)
+        PVAL = (SVAL > 0) * 1
+        err = (PVAL != LVAL).sum() / float(LVAL.size)
+        print ('Error rate: %.1f' % (err*100))
+        
+        minDCF = compute_minDCF_binary_fast(SVAL, LVAL, 0.1, 1.0, 1.0)
+        actDCF = compute_actDCF_binary_fast(SVAL, LVAL, 0.1, 1.0, 1.0)
+        
+        print ('minDCF - pT = 0.1: %.4f' % minDCF)
+        print ('actDCF - pT = 0.1: %.4f' % actDCF)
+        print ()
+
+        minDCF_values.append(minDCF)
+        actDCF_values.append(actDCF)
+
+
+    plt.figure()
+    plt.plot(C_values,minDCF_values, label = "minDCF")
+    plt.plot(C_values,actDCF_values, label = "actDCF")
+    plt.legend()
+    plt.title('minDCF and actDCF in function of C')
+    plt.xscale('log',base = 10)
+    plt.savefig("SVM/poly_svm.png")
+
+
+    # RBF
+    print("\nRBF\n")
+    eps = 1.0
+
+    C_values = np.logspace(-3, 2, 11)
+    
+    
+
+    plt.figure()
+
+    from math import exp as e
+    for gamma in [e(-4),e(-3),e(-2),e(-1)]:
+        minDCF_values = []
+        actDCF_values = []
+        kernelFunc = rbfKernel(gamma)
+        for C in C_values:
+            fScore = train_dual_SVM_kernel(DTR, LTR, C, kernelFunc, eps)
+            SVAL = fScore(DVAL)
+            PVAL = (SVAL > 0) * 1
+            err = (PVAL != LVAL).sum() / float(LVAL.size)
+            print ('Error rate: %.1f' % (err*100))
+
+            minDCF = compute_minDCF_binary_fast(SVAL, LVAL, 0.1, 1.0, 1.0)
+            actDCF = compute_actDCF_binary_fast(SVAL, LVAL, 0.1, 1.0, 1.0)
+
+            print ('minDCF - pT = 0.1: %.4f' % minDCF)
+            print ('actDCF - pT = 0.1: %.4f' % actDCF)
+            print ()
+
+            minDCF_values.append(minDCF)
+            actDCF_values.append(actDCF)
+
+        plt.plot(C_values,minDCF_values, label = f'minDCF g: {gamma:.2f}')
+        plt.plot(C_values,actDCF_values, label = f'actDCF g: {gamma:.2f}')
+
+    plt.legend()
+    plt.title('minDCF and actDCF grid search C,gamma')
+    plt.xscale('log',base = 10)
+    plt.savefig("SVM/rbf_svm.png")
 
 from confusion_matrix import compute_actDCF_binary_fast
 from logreg import trainLogRegBinary, trainWeightedLogRegBinary, trainLogRegQuadratic, quadratic_features
@@ -316,8 +453,6 @@ def lab8(DTR,LTR,DVAL,LVAL, mode = 'default'):
         plt.xscale('log',base = 10)
         plt.savefig(f'LogReg/DCFplot_Quadratic_{mode}.png')
     
-
-
 from confusion_matrix import (compute_optimal_Bayes_binary_llr, 
                                 compute_confusion_matrix,
                                 compute_empirical_Bayes_risk_binary,
@@ -393,7 +528,6 @@ def lab7(data,labels,model = "MVG", mode = "default", m = 0):
 
     return return_value
             
-
 def lab5(data, labels, mode = "default", m = 0):
 
     (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
@@ -472,7 +606,6 @@ def lab5(data, labels, mode = "default", m = 0):
     C = hParams_MVG[1][1]
     Corr_1 = C / ( v_col(C.diagonal()**0.5) * v_row(C.diagonal()**0.5) )
     print("Correlation Matrix for class 1:\n",Corr_1)
-
 
 def until_lab4(data,labels):
 
@@ -643,9 +776,19 @@ def until_lab4(data,labels):
     best_accuracy = 0.0
     best_m = 0
     best_threshold = 0.0
+    
     for m in range(2,6):
 
-        y_pca,val_pca = apply_pca(DTR,DVAL,m)
+        #y_pca,val_pca = apply_pca(DTR,DVAL,m)
+
+        pca_matrix = compute_pca(DTR,m)
+        y_pca = apply_pca_sol(pca_matrix,DTR)
+        val_pca = apply_pca_sol(pca_matrix,DVAL)
+
+
+        print()
+        print("PCA TEST:\n",pca_matrix)
+        print()
 
         # Split the train dataset and compute the train mean and the mean per class
         genuine_train = y_pca[:,LTR == GENUINE]
@@ -664,8 +807,27 @@ def until_lab4(data,labels):
         # Compute lda matrix and ptoject the training and val data
         lda_matrix_train = compute_lda_matrix(Sw_train,Sb_train)
 
-        y_train = lda_matrix_train.T @ y_pca
-        y_val = lda_matrix_train.T @ val_pca
+        print()
+
+        U = compute_lda_JointDiag(y_pca,LTR,m=1)
+
+        y_train = apply_lda(U,y_pca)
+
+
+        #y_train = lda_matrix_train.T @ y_pca
+        #y_val = lda_matrix_train.T @ val_pca
+
+
+        print()
+        print("LDA TEST:\n",U)
+        print()
+
+        if y_train[0, LTR==0].mean() > y_train[0, LTR==1].mean():
+            U = -U
+            y_train = U.T @ y_pca
+        
+        #y_val = lda_matrix_train.T @ val_pca
+        y_val = apply_lda(U,val_pca)
 
         # Compute the treshold as the average of projected means
         threshold = (y_train[0, LTR==GENUINE].mean() + y_train[0, LTR==FAKE].mean()) / 2.0
@@ -673,7 +835,7 @@ def until_lab4(data,labels):
         # Apply the threshold to the classification for the train dataset to test the accuracy
         
         accuracy = evaluate(y_train,LTR,threshold)
-        print("m: ",m, " Error rate on train: ",100.0 - accuracy,"%")
+        print("m: ",m, " Error rate on train: ",100.0 - accuracy,"%", " Threshold: ", threshold )
         
         if accuracy > best_accuracy:
             print(accuracy,best_accuracy)
@@ -682,7 +844,7 @@ def until_lab4(data,labels):
             best_threshold = threshold
             accuracy_val = evaluate(y_val,LVAL,threshold)
             
-    print("Select m: ",best_m, " Error rate on val: ", 100.0 - accuracy_val, "%" )
+    print("Select m: ",best_m, " Error rate on val: ", 100.0 - accuracy_val, "%", " Threshold: ", best_threshold )
     
     # Lab 4
 

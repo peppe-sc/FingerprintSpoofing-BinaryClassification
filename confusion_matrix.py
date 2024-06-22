@@ -124,4 +124,17 @@ def compute_empirical_Bayes_risk_binary_llr_optimal_decisions(llr, classLabels, 
     return compute_empirical_Bayes_risk_binary(predictedLabels, classLabels, prior, Cfn, Cfp, normalize=normalize)
 
 
+
+
 compute_actDCF_binary_fast = compute_empirical_Bayes_risk_binary_llr_optimal_decisions # To have a function with a similar name to the minDCF one
+
+def bayesPlot(S, L, left = -4, right = 4, npts = 30):
+    
+    effPriorLogOdds = numpy.linspace(left, right, npts)
+    effPriors = 1.0 / (1.0 + numpy.exp(-effPriorLogOdds))
+    actDCF = []
+    minDCF = []
+    for effPrior in effPriors:
+        actDCF.append(compute_actDCF_binary_fast(S, L, effPrior, 1.0, 1.0))
+        minDCF.append(compute_minDCF_binary_fast(S, L, effPrior, 1.0, 1.0))
+    return effPriorLogOdds, actDCF, minDCF
