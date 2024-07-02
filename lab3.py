@@ -130,8 +130,8 @@ def lab3(data, labels):
     plt.hist(y_lda[:,labels == FAKE][0], density=True, alpha = 0.5, label= "Fake",bins= 30)
 
     plt.legend(loc = "upper right")
-    plt.xlabel("Feature " + str(0))
-    plt.title("Feature %d" % (1))
+    #plt.xlabel("Feature " + str(0))
+    plt.title("LDA Histogram")
     plt.savefig("LDA/Hists/hist" + str(0) + ".png")
 
     #plt.show()

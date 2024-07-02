@@ -153,9 +153,9 @@ def main():
 
         #print("The best model for prior 0.1 with PCA m = ", best_m, ", model = ", best_model, "minDCF = ", best_DCF)
 
-    print(f'MVG with PCA, best m = {best_m_MVG}, DCF = {best_DCF_MVG}, Calibration error: {round(100.0*(best_act_MVG-best_DCF_MVG)/best_DCF_MVG,2)}%')
-    print(f'Tied with PCA, best m = {best_m_Tied}, DCF = {best_DCF_Tied}, Calibration error: {round(100.0*(best_act_Tied-best_DCF_Tied)/best_DCF_Tied,2)}%')
-    print(f'Naive with PCA, best m = {best_m_Naive}, DCF = {best_DCF_Naive}, Calibration error: {round(100.0*(best_act_Naive-best_DCF_Naive)/best_DCF_Naive,2)}%')
+    print(f'MVG with PCA, best m = {best_m_MVG}, minDCF = {best_DCF_MVG}, actDCF = {best_act_MVG}, Calibration error: {round(100.0*(best_act_MVG-best_DCF_MVG)/best_DCF_MVG,2)}%')
+    print(f'Tied with PCA, best m = {best_m_Tied}, minDCF = {best_DCF_Tied}, actDCF = {best_act_Tied}, Calibration error: {round(100.0*(best_act_Tied-best_DCF_Tied)/best_DCF_Tied,2)}%')
+    print(f'Naive with PCA, best m = {best_m_Naive}, minDCF = {best_DCF_Naive}, actDCF = {best_act_Naive}, Calibration error: {round(100.0*(best_act_Naive-best_DCF_Naive)/best_DCF_Naive,2)}%')
 
 
 

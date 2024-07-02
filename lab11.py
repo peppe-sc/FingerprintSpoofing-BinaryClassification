@@ -15,8 +15,10 @@ from gmm import *
 from calibration import *
 
 
-def lab11(DTR,LTR,DVAL,LVAL):
+def lab11(DTR,LTR,DVAL,LVAL, pT = 0.1):
 
+    best_actDCF = 9999999
+    model = ""
 
     scores_LogReg = numpy.load('./backups/LogReg/LogReg_Quadratic.npy')
     scores_SVM = numpy.load('./backups/SVM/RBF.npy')
@@ -97,8 +99,8 @@ def lab11(DTR,LTR,DVAL,LVAL):
     print ('\t\tminDCF(p=0.1), no cal.: %.3f' % compute_minDCF_binary_fast(scores_LogReg, labels, 0.1, 1.0, 1.0)) # Calibration may change minDCF due to being fold-dependent (thus it's not globally affine anymore)
     print ('\t\tactDCF(p=0.1), no cal.: %.3f' % compute_actDCF_binary_fast(scores_LogReg, labels, 0.1, 1.0, 1.0))
     
-    # We train the calibration model for the prior pT = 0.2
-    pT = 0.1
+    
+    
     # Train KFOLD times the calibration model
     for foldIdx in range(KFOLD):
         # keep 1 fold for validation, use the remaining ones for training
@@ -117,10 +119,16 @@ def lab11(DTR,LTR,DVAL,LVAL):
     calibrated_scores_LogReg = numpy.hstack(calibrated_scores_LogReg)
     labels_LogReg = numpy.hstack(labels_LogReg)
 
+    act = compute_actDCF_binary_fast(calibrated_scores_LogReg, labels_LogReg, 0.1, 1.0, 1.0)
+
     # Evaluate the performance on pooled scores - we need to use the label vector labels_sys_1 since it's aligned to calibrated_scores_sys_1    
     print ('\t\tminDCF(p=0.1), cal.   : %.3f' % compute_minDCF_binary_fast(calibrated_scores_LogReg, labels_LogReg, 0.1, 1.0, 1.0)) # Calibration may change minDCF due to being fold-dependent (thus it's not globally affine anymore)
-    print ('\t\tactDCF(p=0.1), cal.   : %.3f' % compute_actDCF_binary_fast(calibrated_scores_LogReg, labels_LogReg, 0.1, 1.0, 1.0))
+    print ('\t\tactDCF(p=0.1), cal.   : %.3f' % act)
     
+    if act < best_actDCF:
+        best_actDCF = act 
+        model = "LogReg"
+
     logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_LogReg, labels_LogReg)
     axes[0,1].plot(logOdds, actDCF, color='C0', linestyle='-', label = 'actDCF (cal.)') # NOTE: actDCF of the calibrated pooled scores MAY be lower than the global minDCF we computed earlier, since ache fold is calibrated on its own (thus it's as if we were estimating a possibly different threshold for each fold, whereas minDCF employs a single threshold for all scores)
     axes[0,1].legend()
@@ -136,10 +144,14 @@ def lab11(DTR,LTR,DVAL,LVAL):
     # We can use the trained model for application / evaluation data
     calibrated_eval_scores_LogReg = (w.T @ vrow(scores_LogReg_eval) + b - numpy.log(pT / (1-pT))).ravel()
 
+    predictions = (calibrated_eval_scores_LogReg > 0).astype(int)  
+    error_rate = np.mean(predictions != eval_labels) * 100.0
+
     print ('\tEvaluation set')
     print ('\t\tminDCF(p=0.1)         : %.3f' % compute_minDCF_binary_fast(scores_LogReg_eval, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1), no cal.: %.3f' % compute_actDCF_binary_fast(scores_LogReg_eval, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1), cal.   : %.3f' % compute_actDCF_binary_fast(calibrated_eval_scores_LogReg, eval_labels, 0.1, 1.0, 1.0))    
+    print ('\t\terror rate         : %.3f' % error_rate)
     
     # We plot minDCF, non-calibrated DCF and calibrated DCF for system 1
     logOdds, actDCF_precal, minDCF = bayesPlot(scores_LogReg_eval, eval_labels)
@@ -166,7 +178,7 @@ def lab11(DTR,LTR,DVAL,LVAL):
     print ('\t\tactDCF(p=0.1), no cal.: %.3f' % compute_actDCF_binary_fast(scores_SVM, labels, 0.1, 1.0, 1.0))
     
     # We train the calibration model for the prior pT = 0.2
-    pT = 0.1
+    
     # Train KFOLD times the calibration model
     for foldIdx in range(KFOLD):
         # keep 1 fold for validation, use the remaining ones for training
@@ -185,9 +197,15 @@ def lab11(DTR,LTR,DVAL,LVAL):
     calibrated_scores_SVM = numpy.hstack(calibrated_scores_SVM)
     labelsSVM = numpy.hstack(labelsSVM)
 
+    act = compute_actDCF_binary_fast(calibrated_scores_SVM, labelsSVM, 0.1, 1.0, 1.0)
+
     # Evaluate the performance on pooled scores - we need to use the label vector labels_sys_1 since it's aligned to calibrated_scores_sys_1    
     print ('\t\tminDCF(p=0.1), cal.   : %.3f' % compute_minDCF_binary_fast(calibrated_scores_SVM, labelsSVM, 0.1, 1.0, 1.0)) # Calibration may change minDCF due to being fold-dependent (thus it's not globally affine anymore)
-    print ('\t\tactDCF(p=0.1), cal.   : %.3f' % compute_actDCF_binary_fast(calibrated_scores_SVM, labelsSVM, 0.1, 1.0, 1.0))
+    print ('\t\tactDCF(p=0.1), cal.   : %.3f' % act)
+
+    if act < best_actDCF:
+        best_actDCF = act
+        model = "SVM"
     
     logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_SVM, labelsSVM)
     axes[1,1].plot(logOdds, actDCF, color='C0', linestyle='-', label = 'actDCF (cal.)') # NOTE: actDCF of the calibrated pooled scores MAY be lower than the global minDCF we computed earlier, since ache fold is calibrated on its own (thus it's as if we were estimating a possibly different threshold for each fold, whereas minDCF employs a single threshold for all scores)
@@ -202,11 +220,15 @@ def lab11(DTR,LTR,DVAL,LVAL):
     # We can use the trained model for application / evaluation data
     calibrated_eval_scores_SVM = (w.T @ vrow(scores_SVM_eval) + b - numpy.log(pT / (1-pT))).ravel()
 
+    predictions = (calibrated_eval_scores_SVM > 0).astype(int)  
+    error_rate = np.mean(predictions != eval_labels) * 100.0
+
     print ('\tEvaluation set')
     print ('\t\tminDCF(p=0.1)         : %.3f' % compute_minDCF_binary_fast(scores_SVM_eval, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1), no cal.: %.3f' % compute_actDCF_binary_fast(scores_SVM_eval, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1), cal.   : %.3f' % compute_actDCF_binary_fast(calibrated_eval_scores_SVM, eval_labels, 0.1, 1.0, 1.0))    
-    
+    print ('\t\terror rate         : %.3f' % error_rate)
+
     # We plot minDCF, non-calibrated DCF and calibrated DCF for system 1
     logOdds, actDCF_precal, minDCF = bayesPlot(scores_SVM_eval, eval_labels)
     logOdds, actDCF_cal, _ = bayesPlot(calibrated_eval_scores_SVM, eval_labels) # minDCF is the same
@@ -232,7 +254,7 @@ def lab11(DTR,LTR,DVAL,LVAL):
     print ('\t\tactDCF(p=0.1), no cal.: %.3f' % compute_actDCF_binary_fast(scores_GMM, labels, 0.1, 1.0, 1.0))
     
     # We train the calibration model for the prior pT = 0.2
-    pT = 0.1
+    
     # Train KFOLD times the calibration model
     for foldIdx in range(KFOLD):
         # keep 1 fold for validation, use the remaining ones for training
@@ -252,9 +274,15 @@ def lab11(DTR,LTR,DVAL,LVAL):
     calibrated_scores_GMM = numpy.hstack(calibrated_scores_GMM)
     labelsGMM = numpy.hstack(labelsGMM)
 
+    act = compute_actDCF_binary_fast(calibrated_scores_GMM, labelsGMM, 0.1, 1.0, 1.0)
+
     # Evaluate the performance on pooled scores - we need to use the label vector labels_sys_1 since it's aligned to calibrated_scores_sys_1    
     print ('\t\tminDCF(p=0.1), cal.   : %.3f' % compute_minDCF_binary_fast(calibrated_scores_GMM, labelsGMM, 0.1, 1.0, 1.0)) # Calibration may change minDCF due to being fold-dependent (thus it's not globally affine anymore)
-    print ('\t\tactDCF(p=0.1), cal.   : %.3f' % compute_actDCF_binary_fast(calibrated_scores_GMM, labelsGMM, 0.1, 1.0, 1.0))
+    print ('\t\tactDCF(p=0.1), cal.   : %.3f' % act)
+
+    if act < best_actDCF:
+        best_actDCF = act
+        model = "GMM"
     
     logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_GMM, labelsGMM)
     axes[2,1].plot(logOdds, actDCF, color='C0', linestyle='-', label = 'actDCF (cal.)') # NOTE: actDCF of the calibrated pooled scores MAY be lower than the global minDCF we computed earlier, since ache fold is calibrated on its own (thus it's as if we were estimating a possibly different threshold for each fold, whereas minDCF employs a single threshold for all scores)
@@ -270,11 +298,15 @@ def lab11(DTR,LTR,DVAL,LVAL):
     # We can use the trained model for application / evaluation data
     calibrated_eval_scores_GMM = (w.T @ vrow(scores_GMM_eval) + b - numpy.log(pT / (1-pT))).ravel()
 
+    predictions = (calibrated_eval_scores_GMM > 0).astype(int)  
+    error_rate = np.mean(predictions != eval_labels) * 100.0
+
     print ('\tEvaluation set')
     print ('\t\tminDCF(p=0.1)         : %.3f' % compute_minDCF_binary_fast(scores_GMM_eval, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1), no cal.: %.3f' % compute_actDCF_binary_fast(scores_GMM_eval, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1), cal.   : %.3f' % compute_actDCF_binary_fast(calibrated_eval_scores_GMM, eval_labels, 0.1, 1.0, 1.0))    
-    
+    print ('\t\terror rate         : %.3f' % error_rate)
+
     # We plot minDCF, non-calibrated DCF and calibrated DCF for system 1
     logOdds, actDCF_precal, minDCF = bayesPlot(scores_GMM_eval, eval_labels)
     logOdds, actDCF_cal, _ = bayesPlot(calibrated_eval_scores_GMM, eval_labels) # minDCF is the same
@@ -286,7 +318,8 @@ def lab11(DTR,LTR,DVAL,LVAL):
     axes[2,2].legend()
 
     #plt.show()
-    plt.savefig("./CALIBRATION/comparison.png")
+    tmp = str(pT).replace(".","_")
+    plt.savefig(f"./CALIBRATION/comparison_{tmp}.png")
 
 
     # Fusion #
@@ -295,8 +328,8 @@ def lab11(DTR,LTR,DVAL,LVAL):
     fusedScores = [] # We will add to the list the scores computed for each fold
     fusedLabels = [] # We need to ensure that we keep the labels aligned with the scores. The simplest thing to do is to just extract each fold label and pool all the fold labels together in the same order as we pool the corresponding scores.
     
-    # We train the fusion for the prior pT = 0.1
-    pT = 0.1
+    # We train the fusion for the prior 
+    
 
 
     # Train KFOLD times the fusion model
@@ -325,22 +358,29 @@ def lab11(DTR,LTR,DVAL,LVAL):
 
     # Evaluate the performance on pooled scores - we need to use the label vector fusedLabels since it's aligned to calScores_sys_2 (plot on same figure as system 1 and system 2)
 
+    act = compute_actDCF_binary_fast(fusedScores, fusedLabels, 0.1, 1.0, 1.0)
+
     print ('Fusion')
     print ('\tValidation set')
-    print ('\t\tminDCF(p=0.1)         : %.3f' % compute_minDCF_binary_fast(fusedScores, fusedLabels, pT, 1.0, 1.0)) # Calibration may change minDCF due to being fold-dependent (thus it's not globally affine anymore)
-    print ('\t\tactDCF(p=0.1)         : %.3f' % compute_actDCF_binary_fast(fusedScores, fusedLabels, pT, 1.0, 1.0))
+    print ('\t\tminDCF(p=0.1)         : %.3f' % compute_minDCF_binary_fast(fusedScores, fusedLabels, 0.1, 1.0, 1.0)) # Calibration may change minDCF due to being fold-dependent (thus it's not globally affine anymore)
+    print ('\t\tactDCF(p=0.1)         : %.3f' % act)
+
+    if act < best_actDCF:
+        best_actDCF = act
+        model = "Fusion"
+
 
     plt.figure()
 
     # As comparison, we select calibrated models trained with prior 0.2 (our target application)
-    logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_LogReg, labels)
+    logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_LogReg, labels_LogReg)
     plt.title('Fusion - validation')
     plt.plot(logOdds, minDCF, color='C0', linestyle='--', label = 'S1 - minDCF')
     plt.plot(logOdds, actDCF, color='C0', linestyle='-', label = 'S1 - actDCF')
-    logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_SVM, labels)
+    logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_SVM, labelsSVM)
     plt.plot(logOdds, minDCF, color='C1', linestyle='--', label = 'S2 - minDCF')
     plt.plot(logOdds, actDCF, color='C1', linestyle='-', label = 'S2 - actDCF')
-    logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_GMM, labels)
+    logOdds, actDCF, minDCF = bayesPlot(calibrated_scores_GMM, labelsGMM)
     plt.plot(logOdds, minDCF, color='C1', linestyle='--', label = 'S2 - minDCF')
     plt.plot(logOdds, actDCF, color='C1', linestyle='-', label = 'S2 - actDCF')      
     
@@ -351,7 +391,8 @@ def lab11(DTR,LTR,DVAL,LVAL):
     plt.legend()
 
     #plt.show()
-    plt.savefig("./CALIBRATION/fusion_val.png")
+    tmp = str(pT).replace(".","_")
+    plt.savefig(f"./CALIBRATION/fusion_val_{tmp}.png")
 
     # For K-fold the final model is a new model re-trained over the whole set, using the optimal hyperparameters we selected during the k-fold procedure (in this case we have no hyperparameter, so we simply train a new model on the whole dataset)
 
@@ -362,9 +403,13 @@ def lab11(DTR,LTR,DVAL,LVAL):
     SMatrixEval = numpy.vstack([scores_LogReg_eval, scores_SVM_eval, scores_GMM_eval])
     fused_eval_scores = (w.T @ SMatrixEval + b - numpy.log(pT / (1-pT))).ravel()
 
+    predictions = (fused_eval_scores > 0).astype(int)  
+    error_rate = np.mean(predictions != eval_labels) * 100.0
+
     print ('\tEvaluation set')
     print ('\t\tminDCF(p=0.1)         : %.3f' % compute_minDCF_binary_fast(fused_eval_scores, eval_labels, 0.1, 1.0, 1.0))
     print ('\t\tactDCF(p=0.1)         : %.3f' % compute_actDCF_binary_fast(fused_eval_scores, eval_labels, 0.1, 1.0, 1.0))
+    print ('\t\terror rate         : %.3f' % error_rate)
     
     plt.figure()
 
@@ -388,7 +433,10 @@ def lab11(DTR,LTR,DVAL,LVAL):
 
 
     #plt.show()
-    plt.savefig("./CALIBRATION/fusion_eval.png")
+    tmp = str(pT).replace(".","_")
+    plt.savefig(f"./CALIBRATION/fusion_eval_{tmp}.png")
+
+    return best_actDCF, model
 
 
 def main():
@@ -400,8 +448,19 @@ def main():
     f.close()
     (DTR,LTR),(DVAL,LVAL) = split_db_2to1(data,labels)
 
-    lab11(DTR,LTR,DVAL,LVAL)
+    best_pT = 0.1
+    best_actDCF = 99999999
+    best_model = ""
+    for pT in [0.1,0.4,0.5,0.9]:
 
+        actDCF, model = lab11(DTR,LTR,DVAL,LVAL, pT)
+
+        if actDCF < best_actDCF:
+            best_actDCF = actDCF
+            best_model = model
+            best_pT = pT
+
+    print(f'The best performances on validation set are achieved by the {best_model} model, with actDCF = {best_actDCF} and pT = {best_pT}')
 
 if __name__ == "__main__":
     
